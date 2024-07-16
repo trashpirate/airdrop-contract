@@ -53,7 +53,7 @@ contract Airdrop is Ownable {
         returns (uint256 numOfRecipients, address lastRecipient)
     {
         if (recipients.length != amounts.length) revert Airdrop__AddressesMismatchAmounts();
-        if (!s_excludedFromFee[msg.sender]) {
+        if (!s_excludedFromFee[msg.sender] && s_airdropFee > 0) {
             bool success = s_feeToken.transferFrom(msg.sender, s_feeAddress, s_airdropFee);
             if (!success) {
                 revert Airdrop__FeeTokenTransferFailed();

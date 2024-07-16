@@ -159,6 +159,25 @@ contract Airdrop__Test is Test {
         assertEq(feeToken.balanceOf(USER), startingBalance);
     }
 
+    function test__unit__Airdrop__TakesFeeNoFeeIfZeroFee() public funded(USER) tokensApproved(USER) feeApproved(USER) {
+        // address array
+        uint256 airdropSize = 10;
+        uint256 airdropAmount = 100 ether;
+        initializeInput(airdropSize, airdropAmount);
+
+        uint256 startingBalance = feeToken.balanceOf(USER);
+
+        address owner = airdrop.owner();
+        vm.prank(owner);
+        airdrop.setAirdropFee(0);
+
+        vm.startPrank(USER);
+        airdrop.airdrop(address(airdropToken), accounts, amounts);
+        vm.stopPrank();
+
+        assertEq(feeToken.balanceOf(USER), startingBalance);
+    }
+
     function test__unit__Airdrop__ExceedingGasLimit() public funded(USER) feeApproved(USER) {
         uint256 gasLimit = 10_000;
 
