@@ -43,7 +43,7 @@ contract HelperConfig is Script {
     function getMainnetConfig() public pure returns (NetworkConfig memory) {
         return NetworkConfig({
             feeToken: 0x803b629C339941e2b77D2dC499DAc9e1fD9eAC66,
-            feeAddress: 0x694AA1769357215DE4FAC081bf1f309aDC325306,
+            feeAddress: 0x7Bb8be3D9015682d7AC0Ea377dC0c92B0ba152eF,
             airdropFee: AIRDROP_FEE
         });
     }

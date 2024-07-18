@@ -51,11 +51,14 @@ deploy-local:
 deploy-token-testnet: 
 	@forge script script/DeployERC20Token.s.sol:DeployERC20Token --rpc-url $(RPC_BASE_SEPOLIA) --account Test-Deployer --sender 0x11f392ba82c7d63bfdb313ca63372f6de21ab448 --broadcast --verify --etherscan-api-key ${BASESCAN_KEY} -vvvv
 
+deploy-token-mainnet: 
+	@forge script script/DeployERC20Token.s.sol:DeployERC20Token --rpc-url $(RPC_BASE_MAIN) --account Test-Deployer --sender 0x11f392ba82c7d63bfdb313ca63372f6de21ab448 --broadcast --verify --etherscan-api-key ${BASESCAN_KEY} -vvvv
+
 deploy-testnet: 
 	@forge script script/DeployAirdrop.s.sol:DeployAirdrop --rpc-url $(RPC_BASE_SEPOLIA) --account Test-Deployer --sender 0x11f392ba82c7d63bfdb313ca63372f6de21ab448 --broadcast --verify --etherscan-api-key ${BASESCAN_KEY} -vvvv
 
 deploy-mainnet: 
-	@forge script script/DeployAirdrop.s.sol:DeployAirdrop --rpc-url $(RPC_BASE_MAIN) --account Grassy-Deployer --sender 0xa25c35fb88b40A8fFA1DeD934d494fc79339Cb1f --broadcast -g 110 --verify --etherscan-api-key ${BASESCAN_KEY} -vvvv
+	@forge script script/DeployAirdrop.s.sol:DeployAirdrop --rpc-url $(RPC_BASE_MAIN) --account EARN-Deployer --sender 0x4397122Ad9602aD358816F1f2De2396e3dCEb857 --broadcast -g 110 --verify --etherscan-api-key ${BASESCAN_KEY} -vvvv
 
 
 -include ${FCT_PLUGIN_PATH}/makefile-external

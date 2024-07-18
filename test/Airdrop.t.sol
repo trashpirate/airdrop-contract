@@ -85,7 +85,7 @@ contract Airdrop__Test is Test {
      * INITIALIZATION
      */
     function test__unit__Airdrop__Initialization() public view {
-        assertEq(airdrop.getMaxGasLimit(), 3000000);
+        assertEq(airdrop.getMaxGasLimit(), 12000000);
         assertEq(airdrop.getAirdropFee(), networkConfig.airdropFee);
         assertEq(airdrop.getFeeAddress(), networkConfig.feeAddress);
         assertEq(airdrop.getFeeToken(), networkConfig.feeToken);

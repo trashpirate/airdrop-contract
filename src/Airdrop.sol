@@ -11,7 +11,7 @@ contract Airdrop is Ownable {
     /**
      * Storage Variables
      */
-    uint256 private s_maxGasLimit = 3_000_000;
+    uint256 private s_maxGasLimit = 12_000_000;
 
     IERC20 private s_feeToken;
     address private s_feeAddress;
@@ -40,6 +40,7 @@ contract Airdrop is Ownable {
         s_feeToken = IERC20(feeToken);
         s_feeAddress = feeAddress;
         s_airdropFee = airdropFee;
+        _excludeFromFee(msg.sender, true);
     }
 
     /**
@@ -124,7 +125,7 @@ contract Airdrop is Ownable {
      * @param _isExcluded Flag set to exclude (true) or include (false)
      */
     function excludeFromFee(address account, bool _isExcluded) external onlyOwner {
-        s_excludedFromFee[account] = _isExcluded;
+        _excludeFromFee(account, _isExcluded);
         emit ExcludedFromFeeSet(msg.sender, account, _isExcluded);
     }
 
@@ -162,5 +163,15 @@ contract Airdrop is Ownable {
      */
     function isExcluded(address account) external view returns (bool) {
         return s_excludedFromFee[account];
+    }
+
+    /**
+     * @notice Includes/Excludes wallet from fee
+     * @param account Address to be updates
+     * @param _isExcluded Flag set to exclude (true) or include (false)
+     */
+    function _excludeFromFee(address account, bool _isExcluded) private {
+        s_excludedFromFee[account] = _isExcluded;
+        emit ExcludedFromFeeSet(msg.sender, account, _isExcluded);
     }
 }
