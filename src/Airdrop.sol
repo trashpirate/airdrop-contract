@@ -11,7 +11,7 @@ contract Airdrop is Ownable {
     /**
      * Storage Variables
      */
-    uint256 private s_maxGasLimit = 12_000_000;
+    uint256 private s_maxRecipients = 400;
 
     IERC20 private s_feeToken;
     address private s_feeAddress;
@@ -23,7 +23,7 @@ contract Airdrop is Ownable {
      * Events
      */
     event AirdropFeeSet(address indexed sender, uint256 indexed amount);
-    event GasLimitSet(address indexed sender, uint256 indexed amount);
+    event MaxRecipientsSet(address indexed sender, uint256 indexed amount);
     event FeeAddressSet(address indexed sender, address indexed account);
     event FeeTokenSet(address indexed sender, address indexed token);
     event ExcludedFromFeeSet(address indexed sender, address indexed account, bool indexed isExcluded);
@@ -35,6 +35,8 @@ contract Airdrop is Ownable {
     error Airdrop__FeeTokenTransferFailed();
     error Airdrop__FeeAddressIsZeroAddress();
     error Airdrop__FeeTokenIsZeroAddress();
+    error Airdrop__TokenTransferFailed();
+    error Airdrop__TooManyRecipients();
 
     constructor(address feeToken, address feeAddress, uint256 airdropFee) Ownable(msg.sender) {
         s_feeToken = IERC20(feeToken);
@@ -49,45 +51,50 @@ contract Airdrop is Ownable {
      * @param recipients Airdrop recipient addresses
      * @param amounts Airdrop amounts associated with address
      */
-    function airdrop(address token, address[] calldata recipients, uint256[] calldata amounts)
+    function airdrop(address token, address[] calldata recipients, uint256[] calldata amounts, uint256 totalAmount)
         external
-        returns (uint256 numOfRecipients, address lastRecipient)
+        returns (uint256 numOfRecipients)
     {
         if (recipients.length != amounts.length) revert Airdrop__AddressesMismatchAmounts();
+        if (recipients.length > s_maxRecipients) revert Airdrop__TooManyRecipients();
+
         if (!s_excludedFromFee[msg.sender] && s_airdropFee > 0) {
-            bool success = s_feeToken.transferFrom(msg.sender, s_feeAddress, s_airdropFee);
-            if (!success) {
+            bool fee_success = s_feeToken.transferFrom(msg.sender, s_feeAddress, s_airdropFee);
+            if (!fee_success) {
                 revert Airdrop__FeeTokenTransferFailed();
             }
         }
 
-        uint256 gasLeft = gasleft();
-        uint256 maxGasLimit = s_maxGasLimit;
+        bool funding_success = IERC20(token).transferFrom(msg.sender, address(this), totalAmount);
+        if (!funding_success) {
+            revert Airdrop__TokenTransferFailed();
+        }
+
         uint256 i = 0;
         while (i < recipients.length) {
-            if (gasLeft - gasleft() >= maxGasLimit) {
-                break;
-            }
-            bool success = IERC20(token).transferFrom(msg.sender, recipients[i], amounts[i]);
-            if (!success) {
-                break;
+            bool transfer_success = IERC20(token).transfer(recipients[i], amounts[i]);
+            if (!transfer_success) {
+                revert Airdrop__TokenTransferFailed();
             }
 
             unchecked {
                 i++;
             }
         }
-        lastRecipient = recipients[i - 1];
         numOfRecipients += i;
     }
+    // 2760802
+    // 2723877
+    // 2660830
+    // 2650470
 
     /**
      * @notice Sets the maximum gas limit allowed for airdrop (only owner)
-     * @param maxGasLimit Maximum gas limit allowed for airdrop transaction
+     * @param maxRecipients Maximum gas limit allowed for airdrop transaction
      */
-    function setMaxGasLimit(uint256 maxGasLimit) external onlyOwner {
-        s_maxGasLimit = maxGasLimit;
-        emit GasLimitSet(msg.sender, maxGasLimit);
+    function setMaxRecipients(uint256 maxRecipients) external onlyOwner {
+        s_maxRecipients = maxRecipients;
+        emit MaxRecipientsSet(msg.sender, maxRecipients);
     }
 
     /**
@@ -136,8 +143,8 @@ contract Airdrop is Ownable {
     /**
      * @notice Returns the maximum gas limit allowed for airdrops
      */
-    function getMaxGasLimit() external view returns (uint256) {
-        return s_maxGasLimit;
+    function getMaxRecipients() external view returns (uint256) {
+        return s_maxRecipients;
     }
 
     /**

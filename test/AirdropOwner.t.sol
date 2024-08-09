@@ -28,7 +28,7 @@ contract AirdropOwner__Test is Test {
 
     // events
     event AirdropFeeSet(address indexed sender, uint256 indexed amount);
-    event GasLimitSet(address indexed sender, uint256 indexed amount);
+    event MaxRecipientsSet(address indexed sender, uint256 indexed amount);
     event FeeAddressSet(address indexed sender, address indexed account);
     event FeeTokenSet(address indexed sender, address indexed token);
     event ExcludedFromFeeSet(address indexed sender, address indexed account, bool indexed isExcluded);
@@ -79,27 +79,27 @@ contract AirdropOwner__Test is Test {
     }
 
     /**
-     * SET GAS LIMIT
+     * SET MAX RECIPIENTS
      */
     function test__unit__Airdrop__SetGasLimit() public {
-        uint256 gasLimit = 1_000_000;
+        uint256 maxRecipients = 100;
 
         address owner = airdrop.owner();
 
         vm.prank(owner);
-        airdrop.setMaxGasLimit(gasLimit);
-        assertEq(airdrop.getMaxGasLimit(), gasLimit);
+        airdrop.setMaxRecipients(maxRecipients);
+        assertEq(airdrop.getMaxRecipients(), maxRecipients);
     }
 
     function test__unit__Airdrop__EmitEvent__SetGasLimit() public {
-        uint256 gasLimit = 1_000_000;
+        uint256 maxRecipients = 100;
         address owner = airdrop.owner();
 
         vm.expectEmit(true, true, true, true);
-        emit GasLimitSet(owner, gasLimit);
+        emit MaxRecipientsSet(owner, maxRecipients);
 
         vm.prank(owner);
-        airdrop.setMaxGasLimit(gasLimit);
+        airdrop.setMaxRecipients(maxRecipients);
     }
 
     /**

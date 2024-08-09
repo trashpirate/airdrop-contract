@@ -85,7 +85,7 @@ contract Airdrop__Test is Test {
      * INITIALIZATION
      */
     function test__unit__Airdrop__Initialization() public view {
-        assertEq(airdrop.getMaxGasLimit(), 12000000);
+        assertEq(airdrop.getMaxRecipients(), 400);
         assertEq(airdrop.getAirdropFee(), networkConfig.airdropFee);
         assertEq(airdrop.getFeeAddress(), networkConfig.feeAddress);
         assertEq(airdrop.getFeeToken(), networkConfig.feeToken);
@@ -110,10 +110,11 @@ contract Airdrop__Test is Test {
         // address array
         uint256 airdropSize = 10;
         uint256 airdropAmount = 100 ether;
+        uint256 totalAirdropAmount = airdropSize * airdropAmount;
         initializeInput(airdropSize, airdropAmount);
 
         vm.startPrank(USER);
-        airdrop.airdrop(address(airdropToken), accounts, amounts);
+        airdrop.airdrop(address(airdropToken), accounts, amounts, totalAirdropAmount);
         vm.stopPrank();
 
         for (uint256 i = 0; i < airdropSize; i++) {
@@ -125,11 +126,12 @@ contract Airdrop__Test is Test {
         // address array
         uint256 airdropSize = 10;
         uint256 airdropAmount = 100 ether;
+        uint256 totalAirdropAmount = airdropSize * airdropAmount;
         initializeInput(airdropSize, airdropAmount);
 
         uint256 startingBalance = feeToken.balanceOf(USER);
         vm.startPrank(USER);
-        airdrop.airdrop(address(airdropToken), accounts, amounts);
+        airdrop.airdrop(address(airdropToken), accounts, amounts, totalAirdropAmount);
         vm.stopPrank();
 
         assertEq(feeToken.balanceOf(USER), startingBalance - airdrop.getAirdropFee());
@@ -144,6 +146,7 @@ contract Airdrop__Test is Test {
         // address array
         uint256 airdropSize = 10;
         uint256 airdropAmount = 100 ether;
+        uint256 totalAirdropAmount = airdropSize * airdropAmount;
         initializeInput(airdropSize, airdropAmount);
 
         uint256 startingBalance = feeToken.balanceOf(USER);
@@ -153,7 +156,7 @@ contract Airdrop__Test is Test {
         airdrop.excludeFromFee(USER, true);
 
         vm.startPrank(USER);
-        airdrop.airdrop(address(airdropToken), accounts, amounts);
+        airdrop.airdrop(address(airdropToken), accounts, amounts, totalAirdropAmount);
         vm.stopPrank();
 
         assertEq(feeToken.balanceOf(USER), startingBalance);
@@ -163,6 +166,7 @@ contract Airdrop__Test is Test {
         // address array
         uint256 airdropSize = 10;
         uint256 airdropAmount = 100 ether;
+        uint256 totalAirdropAmount = airdropSize * airdropAmount;
         initializeInput(airdropSize, airdropAmount);
 
         uint256 startingBalance = feeToken.balanceOf(USER);
@@ -172,46 +176,37 @@ contract Airdrop__Test is Test {
         airdrop.setAirdropFee(0);
 
         vm.startPrank(USER);
-        airdrop.airdrop(address(airdropToken), accounts, amounts);
+        airdrop.airdrop(address(airdropToken), accounts, amounts, totalAirdropAmount);
         vm.stopPrank();
 
         assertEq(feeToken.balanceOf(USER), startingBalance);
     }
 
-    function test__unit__Airdrop__ExceedingGasLimit() public funded(USER) feeApproved(USER) {
-        uint256 gasLimit = 10_000;
-
+    function test__unit__Airdrop__ExceedingMaxRecipents() public funded(USER) feeApproved(USER) {
         address owner = airdrop.owner();
 
         vm.prank(owner);
-        airdrop.setMaxGasLimit(gasLimit);
+        airdrop.setMaxRecipients(5);
 
         //  input
         uint256 airdropSize = 10;
         uint256 airdropAmount = 100 ether;
+        uint256 totalAirdropAmount = airdropSize * airdropAmount;
         initializeInput(airdropSize, airdropAmount);
 
-        vm.startPrank(USER);
+        vm.prank(USER);
         airdropToken.approve(address(airdrop), airdropSize * airdropAmount);
-        (uint256 numRecipients, address lastRecipient) = airdrop.airdrop(address(airdropToken), accounts, amounts);
-        vm.stopPrank();
 
-        console.log("Number of Recepients: ", numRecipients);
-        console.log("Last Recepient: ", lastRecipient);
-        assertEq(accounts[numRecipients - 1], lastRecipient);
+        vm.expectRevert(Airdrop.Airdrop__TooManyRecipients.selector);
+        vm.prank(USER);
+        uint256 numRecipients = airdrop.airdrop(address(airdropToken), accounts, amounts, totalAirdropAmount);
     }
 
     function test__unit__Airdrop__FailedTransfer() public funded(USER) feeApproved(USER) {
-        uint256 gasLimit = 300_000;
-
-        address owner = airdrop.owner();
-
-        vm.prank(owner);
-        airdrop.setMaxGasLimit(gasLimit);
-
         // address array
         uint256 airdropSize = 10;
         uint256 airdropAmount = 100 ether;
+        uint256 totalAirdropAmount = airdropSize * airdropAmount;
         initializeInput(airdropSize, airdropAmount);
 
         vm.prank(USER);
@@ -219,23 +214,20 @@ contract Airdrop__Test is Test {
 
         vm.mockCall(
             address(airdropToken),
-            abi.encodeWithSelector(airdropToken.transferFrom.selector, USER, accounts[5], airdropAmount),
+            abi.encodeWithSelector(airdropToken.transfer.selector, accounts[5], airdropAmount),
             abi.encode(false)
         );
 
+        vm.expectRevert(Airdrop.Airdrop__TokenTransferFailed.selector);
         vm.prank(USER);
-        (uint256 numRecipients, address lastRecipient) = airdrop.airdrop(address(airdropToken), accounts, amounts);
-
-        console.log("Number of Recepients: ", numRecipients);
-        console.log("Last Recepient: ", lastRecipient);
-        assertEq(numRecipients, 5);
-        assertEq(accounts[numRecipients - 1], lastRecipient);
+        airdrop.airdrop(address(airdropToken), accounts, amounts, totalAirdropAmount);
     }
 
     function test__unit__Airdrop__RevertsWhen__FeeTokenTransferFails() public funded(USER) feeApproved(USER) {
         // address array
         uint256 airdropSize = 10;
         uint256 airdropAmount = 100 ether;
+        uint256 totalAirdropAmount = airdropSize * airdropAmount;
         initializeInput(airdropSize, airdropAmount);
 
         vm.prank(USER);
@@ -251,13 +243,14 @@ contract Airdrop__Test is Test {
 
         vm.expectRevert(Airdrop.Airdrop__FeeTokenTransferFailed.selector);
         vm.prank(USER);
-        airdrop.airdrop(address(airdropToken), accounts, amounts);
+        airdrop.airdrop(address(airdropToken), accounts, amounts, totalAirdropAmount);
     }
 
     function test__unit__Airdrop__RevertsWhen__ArrayMismatch() public funded(USER) feeApproved(USER) {
         // address array
         uint256 airdropSize = 10;
         uint256 airdropAmount = 100 ether;
+        uint256 totalAirdropAmount = airdropSize * airdropAmount;
         initializeInput(airdropSize, airdropAmount);
         amounts.pop();
 
@@ -266,7 +259,7 @@ contract Airdrop__Test is Test {
 
         vm.expectRevert(Airdrop.Airdrop__AddressesMismatchAmounts.selector);
         vm.prank(USER);
-        airdrop.airdrop(address(airdropToken), accounts, amounts);
+        airdrop.airdrop(address(airdropToken), accounts, amounts, totalAirdropAmount);
     }
 
     function test__integration__Airdrop__Airdrop() public funded(USER) {

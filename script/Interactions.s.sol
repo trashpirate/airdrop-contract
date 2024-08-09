@@ -10,6 +10,7 @@ contract ExecuteAirdrop is Script {
     function airdrop(address recentContractAddress) public {
         uint256 airdropSize = 100;
         uint256 airdropAmount = 100 ether;
+        uint256 totalAirdropAmount = airdropSize * airdropAmount;
         address[] memory accounts = new address[](airdropSize);
         uint256[] memory amounts = new uint256[](airdropSize);
         for (uint256 i = 0; i < airdropSize; i++) {
@@ -28,11 +29,11 @@ contract ExecuteAirdrop is Script {
         ERC20Token(feeToken).approve(recentContractAddress, airdropFee);
 
         uint256 gasLeft = gasleft();
-        (uint256 numOfRecipient, address lastRecipient) =
-            Airdrop(recentContractAddress).airdrop(address(token), accounts, amounts);
+        uint256 numOfRecipient =
+            Airdrop(recentContractAddress).airdrop(address(token), accounts, amounts, totalAirdropAmount);
         console.log("Airdrop gas: ", gasLeft - gasleft());
-        console.log("Number of Recepients: ", numOfRecipient);
-        console.log("Last Recepient: ", lastRecipient);
+        console.log("Number of Recipients: ", numOfRecipient);
+
         vm.stopBroadcast();
     }
 
