@@ -63,18 +63,22 @@ contract Airdrop is Ownable {
 
         uint256 gasLeft = gasleft();
         uint256 maxGasLimit = s_maxGasLimit;
-        for (uint256 i = 0; i < recipients.length; i++) {
+        uint256 i = 0;
+        while (i < recipients.length) {
             if (gasLeft - gasleft() >= maxGasLimit) {
-                return (numOfRecipients, lastRecipient);
+                break;
             }
             bool success = IERC20(token).transferFrom(msg.sender, recipients[i], amounts[i]);
             if (!success) {
-                return (numOfRecipients, lastRecipient);
+                break;
             }
 
-            lastRecipient = recipients[i];
-            numOfRecipients = i + 1;
+            unchecked {
+                i++;
+            }
         }
+        lastRecipient = recipients[i - 1];
+        numOfRecipients += i;
     }
 
     /**

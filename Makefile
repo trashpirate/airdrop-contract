@@ -46,7 +46,7 @@ slither :; slither ./src
 
 # deployment
 deploy-local: 
-	@forge script script/DeployAirdrop.s.sol:DeployAirdrop --rpc-url localhost --private-key ${DEFAULT_ANVIL_KEY} --sender 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --broadcast 
+	@forge script script/DeployAirdrop.s.sol:DeployAirdrop --rpc-url ${RPC_LOCALHOST} --private-key ${DEFAULT_ANVIL_KEY} --sender 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --broadcast 
 
 deploy-token-testnet: 
 	@forge script script/DeployERC20Token.s.sol:DeployERC20Token --rpc-url $(RPC_BASE_SEPOLIA) --account Test-Deployer --sender 0x11f392ba82c7d63bfdb313ca63372f6de21ab448 --broadcast --verify --etherscan-api-key ${BASESCAN_KEY} -vvvv
@@ -60,5 +60,7 @@ deploy-testnet:
 deploy-mainnet: 
 	@forge script script/DeployAirdrop.s.sol:DeployAirdrop --rpc-url $(RPC_BASE_MAIN) --account EARN-Deployer --sender 0x4397122Ad9602aD358816F1f2De2396e3dCEb857 --broadcast -g 110 --verify --etherscan-api-key ${BASESCAN_KEY} -vvvv
 
+airdrop-local:
+	@forge script script/Interactions.s.sol:ExecuteAirdrop --rpc-url ${RPC_LOCALHOST} --private-key ${DEFAULT_ANVIL_KEY} --sender 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266 --broadcast -vv
 
 -include ${FCT_PLUGIN_PATH}/makefile-external
