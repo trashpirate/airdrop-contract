@@ -89,8 +89,8 @@ contract Airdrop is Ownable {
     // 2650470
 
     /**
-     * @notice Sets the maximum gas limit allowed for airdrop (only owner)
-     * @param maxRecipients Maximum gas limit allowed for airdrop transaction
+     * @notice Sets the maximum recipients allowed for airdrop (only owner)
+     * @param maxRecipients Maximum recipients allowed for airdrop transaction
      */
     function setMaxRecipients(uint256 maxRecipients) external onlyOwner {
         s_maxRecipients = maxRecipients;
